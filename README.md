@@ -1,4 +1,4 @@
-# MMM-MyMüllNotify
+# MMM-MyMuell
 
 
 This a module for the [MagicMirror](https://github.com/MichMich/MagicMirror). It can display if on todays date a certain trash type is collected in Germany.
@@ -14,14 +14,14 @@ cd ~/MagicMirror/modules
 
 Clone this repository:
 ```
-git clone https://github.com/ChrwagnerTHU/MMM-MyMüllNotify
+git clone https://github.com/ChrwagnerTHU/MMM-MyMuell
 ```
 
 ## Updating
 
 In terminal, go to the Module's folder and pull the latest version from GitHub:
 ```
-cd ~/MagicMirror/modules/MMM-MyMüllNotify
+cd ~/MagicMirror/modules/MMM-MyMuell
 git pull
 ```
 
@@ -49,7 +49,7 @@ To use this module, add it to the modules array in the `~/MagicMirror/config/con
 #### Example
 ```
     {
-        module: 'MMM-MyMüllNotify',
+        module: 'MMM-MyMuell',
         header: "Abfuhrkalender",
         position: 'top_left',
         config: {
