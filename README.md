@@ -1,8 +1,8 @@
 # MMM-MyMuell
 
 
-This a module for the [MagicMirror](https://github.com/MichMich/MagicMirror). It can display if on todays date a certain trash type is collected in Germany.
-Only cities which use the MyMüll application are available with this module. 
+This a module for the [MagicMirror](https://github.com/MichMich/MagicMirror). It can display if on todays date a certain trash type is collected in Germany.<br>
+Only cities which use the MyMüll application are available with this module. <br>
 Have a look [here](https://mymuell.jumomind.com/mmapp/loxone/lox.php?r=cities) if your city is supported.
 
 ## Installation
