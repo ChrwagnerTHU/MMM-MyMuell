@@ -34,45 +34,84 @@ Module.register("MMM-MyMuell", {
     const wrapper = document.createElement("div");
   
     if (!this.trashData) {
-      wrapper.innerHTML = "Loading...";
+      wrapper.innerHTML = "Lädt...";
       return wrapper;
     }
   
     const today = new Date().toISOString().split("T")[0];
-    const todayCollections = this.trashData.filter((collection) => collection.day === today);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowFormatted = tomorrow.toISOString().split("T")[0];
   
-    if (todayCollections.length === 0) {
-      wrapper.innerHTML = "No trash collection today.";
+    const todayCollections = this.trashData.filter((collection) => collection.day === today);
+    const tomorrowCollections = this.trashData.filter((collection) => collection.day === tomorrowFormatted);
+  
+    if (todayCollections.length === 0 && tomorrowCollections.length === 0) {
+      wrapper.innerHTML = "Keine Leerungen geplant";
       return wrapper;
     }
   
     const table = document.createElement("table");
     table.className = "trash-collection-table";
   
-    todayCollections.forEach((collection) => {
-      const row = document.createElement("tr");
+    if (todayCollections.length > 0) {
+      const todayHeaderRow = document.createElement("tr");
+      const todayHeaderCell = document.createElement("th");
+      todayHeaderCell.className = "trash-collection-header";
+      todayHeaderCell.colSpan = 3;
+      todayHeaderCell.innerHTML = "Heute";
+      todayHeaderRow.appendChild(todayHeaderCell);
+      table.appendChild(todayHeaderRow);
   
-      const colorCell = document.createElement("td");
-      colorCell.className = "trash-collection-color";
-      colorCell.style.backgroundColor = "#" + collection.color;
-      row.appendChild(colorCell);
+      todayCollections.forEach((collection) => {
+        const row = this.createTableRow(collection);
+        table.appendChild(row);
+      });
+    }
   
-      const titleCell = document.createElement("td");
-      titleCell.className = "trash-collection-title";
-      titleCell.innerHTML = collection.title;
-      row.appendChild(titleCell);
+    if (tomorrowCollections.length > 0) {
+      const tomorrowHeaderRow = document.createElement("tr");
+      const tomorrowHeaderCell = document.createElement("th");
+      tomorrowHeaderCell.className = "trash-collection-header";
+      tomorrowHeaderCell.colSpan = 3;
+      tomorrowHeaderCell.innerHTML = "Morgen";
+      tomorrowHeaderRow.appendChild(tomorrowHeaderCell);
+      table.appendChild(tomorrowHeaderRow);
   
-      if (self.description){
-        const descriptionCell = document.createElement("td");
-        descriptionCell.className = "trash-collection-description";
-        descriptionCell.innerHTML = collection.description;
-        row.appendChild(descriptionCell);
-      }
-  
-      table.appendChild(row);
-    });
+      tomorrowCollections.forEach((collection) => {
+        const row = this.createTableRow(collection);
+        table.appendChild(row);
+      });
+    }
   
     wrapper.appendChild(table);
     return wrapper;
   },
+  
+  // Helper function to create a table row for a trash collection entry
+  createTableRow: function (collection) {
+    const row = document.createElement("tr");
+  
+    const colorCell = document.createElement("td");
+    colorCell.className = "trash-collection-color";
+    colorCell.style.padding = "5px";
+    colorCell.style.backgroundColor = "#" + collection.color;
+    row.appendChild(colorCell);
+  
+    const titleCell = document.createElement("td");
+    titleCell.className = "trash-collection-title";
+    titleCell.style.padding = "5px";
+    titleCell.innerHTML = collection.title;
+    row.appendChild(titleCell);
+  
+    if (self.description){
+      const descriptionCell = document.createElement("td");
+      descriptionCell.className = "trash-collection-description";
+      descriptionCell.style.padding = "5px";
+      descriptionCell.innerHTML = collection.description;
+      row.appendChild(descriptionCell);
+    } 
+  
+    return row;
+  }
 });
