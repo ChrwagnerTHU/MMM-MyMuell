@@ -1,6 +1,6 @@
 /* MagicMirror2 Module: TrashCollection */
 
-Module.register("MMM-TrashCollectionNotify", {
+Module.register("MMM-MyMuell", {
   // Default module config
   defaults: {
     cityId: "",
