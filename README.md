@@ -33,6 +33,9 @@ git pull
 |`cityId`|""|ID of the city you want to display|
 |`areaId`|""|ID of the area you want to display|
 |`description`|false|Flag if further descriptions shall be displayed|
+|`updateDataInterval`|0|day of week when to update data (0 = Sunday)|
+|`updateInterval`|6 * 60 * 60 * 1000|Updating rate based on fetched data|
+|`schedule`|[]|Days on which it is particularly important to put out the corresponding waste bin can be entered here in the `YYYY-MM-DD` format.|
 
 
 ## Using the module
