@@ -6,12 +6,29 @@ Module.register("MMM-MyMuell", {
     cityId: "",
     areaId: "",
     description: false,
+    updateDataInterval: 0, //Sunday
+    updateInterval: 6 * 60 * 60 * 1000, // every 6 hours
+    schedule: []
   },
 
   // Module initialization
   start: function () {
     this.trashData = null;
     this.updateTrashData();
+
+    setInterval(() => {
+      this.update();
+    }, this.config.updateInterval);
+  },
+
+  update: function(){
+    var self = this;
+    const today = new Date().getDay();
+    if (today === self.updateDataInterval) {
+      self.updateTrashData()
+    } else {
+      self.updateDom();
+    }
   },
 
   // Fetches the trash collection data for the specified city and area
@@ -31,6 +48,7 @@ Module.register("MMM-MyMuell", {
 
   // Generates the module content
   getDom: function () {
+    var self = this;
     const wrapper = document.createElement("div");
   
     if (!this.trashData) {
@@ -78,12 +96,23 @@ Module.register("MMM-MyMuell", {
       tomorrowHeaderRow.appendChild(tomorrowHeaderCell);
       table.appendChild(tomorrowHeaderRow);
   
-      tomorrowCollections.forEach((collection) => {
+      tomorrowCollections.forEach(collection => {
         const row = this.createTableRow(collection);
         table.appendChild(row);
       });
     }
-  
+
+    if (this.config.schedule.includes(today) || this.config.schedule.includes(tomorrowFormatted)) {
+      const infoRow = document.createElement("tr");
+      const infoCell = document.createElement("td");
+      infoCell.colSpan = 3;
+      infoCell.className = "trash-collection-info";
+      infoCell.innerHTML = "Mülltonne rausstellen!";
+      infoCell.style.color = "red"
+      infoRow.appendChild(infoCell);
+      table.appendChild(infoRow, table.firstChild);
+    }
+
     wrapper.appendChild(table);
     return wrapper;
   },
@@ -104,7 +133,7 @@ Module.register("MMM-MyMuell", {
     titleCell.innerHTML = collection.title;
     row.appendChild(titleCell);
   
-    if (self.description){
+    if (this.config.description){
       const descriptionCell = document.createElement("td");
       descriptionCell.className = "trash-collection-description";
       descriptionCell.style.padding = "5px";
