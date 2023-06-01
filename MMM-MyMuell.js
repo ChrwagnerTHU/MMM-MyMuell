@@ -7,7 +7,7 @@ Module.register("MMM-MyMuell", {
     areaId: "",
     description: false,
     updateDataInterval: 0, //Sunday
-    updateInterval: 6 * 60 * 60 * 1000, // every 6 hours
+    updateInterval: 60 * 60 * 1000, // every hour
     schedule: []
   },
 
