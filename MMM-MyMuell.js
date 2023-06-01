@@ -27,7 +27,11 @@ Module.register("MMM-MyMuell", {
     if (today === self.updateDataInterval) {
       self.updateTrashData()
     } else {
-      self.updateDom();
+      if (!this.trashData){
+        self.updateTrashData()
+      } else {
+        self.updateDom();
+      }
     }
   },
 
