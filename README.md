@@ -11,6 +11,22 @@ Das Modul zeigt:
 
 Jede Abfallart wird mit dem Farbcode dargestellt, den der jeweilige Entsorger für sie vorsieht.
 
+## Farbdarstellung
+
+Die APIs liefern die Farben als blasse Pastelltöne, weil sie dort als Hintergrund hinter schwarzer Schrift auf weißen Webseiten dienen (z. B. `#d9edf7` für die Blaue Tonne). Auf dem schwarzen Spiegel sehen damit alle Tonnen gleich hell aus und lassen sich kaum auseinanderhalten.
+
+Deshalb hebt das Modul mit `colorBoost: true` (Standard) die Sättigung an und zieht die Helligkeit in einen kräftigen Bereich. Der Farbton bleibt dabei erhalten, die Tonne behält also ihre Farbe:
+
+| Abfallart | API-Farbe | dargestellt |
+|---|---|---|
+| Restmüll | `#e3e3e3` | `#c7c7c7` |
+| Blaue Tonne | `#d9edf7` | `#13a4ec` |
+| Biotonne | `#e6d8c6` | `#da8212` |
+| Gelber Sack | `#fff7cc` | `#fcd500` |
+| Christbaumabfuhr | `#dcf0d6` | `#44e713` |
+
+Graustufen wie beim Restmüll behalten ihren neutralen Ton und werden nur aufgehellt. Mit `colorBoost: false` werden die Originalfarben der API verwendet.
+
 ## Unterstützte Datenquellen
 
 Das Modul kann seine Termine aus zwei verschiedenen Systemen beziehen. Welches für dich gilt, hängt davon ab, welchen Dienstleister dein Entsorgungsbetrieb einsetzt.
@@ -86,6 +102,8 @@ Füge das Modul in `~/MagicMirror/config/config.js` hinzu.
 |---|---|---|
 | `provider` | `"jumomind"` | Datenquelle: `"jumomind"` oder `"awido"` |
 | `description` | `false` | Zeigt eine zusätzliche Spalte mit der Beschreibung des Termins |
+| `colorBoost` | `true` | Wertet die Farben der Entsorger auf, damit die Tonnen auf dem schwarzen Spiegel unterscheidbar sind (siehe unten) |
+| `colorBarWidth` | `"14px"` | Breite des Farbbalkens vor jeder Abfallart |
 | `updateDataInterval` | `0` | Wochentag, an dem die Daten neu von der API geladen werden (`0 = Sonntag`, `1 = Montag`, … `6 = Samstag`) |
 | `updateInterval` | `60 * 60 * 1000` | Intervall für das Modul-Update in Millisekunden (Standard: stündlich) |
 | `schedule` | `[]` | Liste von Datumseinträgen im Format `YYYY-MM-DD`, an denen der Hinweis `Mülltonne rausstellen!` erscheint |

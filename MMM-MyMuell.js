@@ -15,6 +15,8 @@ Module.register("MMM-MyMuell", {
     includeSpecialEvents: false, // Sondertermine (ReparaturCafé, Putzete, ...) mit anzeigen
 
     description: false,
+    colorBoost: true, // blasse API-Farben kraeftiger darstellen
+    colorBarWidth: "14px", // Breite des Farbbalkens je Tonne
     updateDataInterval: 0, // Sonntag
     updateInterval: 60 * 60 * 1000, // stündlich
     schedule: [],
@@ -167,7 +169,102 @@ Module.register("MMM-MyMuell", {
     if (!color) {
       return "transparent";
     }
-    return color.startsWith("#") ? color : `#${color}`;
+    const hex = color.startsWith("#") ? color : `#${color}`;
+    return this.config.colorBoost ? this.boostColor(hex) : hex;
+  },
+
+  /*
+   * Die APIs liefern blasse Pastelltöne (#d9edf7, #fff7cc, ...), die für
+   * weiße Webseiten gedacht sind. Auf dem schwarzen Spiegel sehen damit alle
+   * Tonnen gleich hell aus, darum Sättigung hoch und Helligkeit in einen
+   * kräftigen Bereich ziehen. Graustufen (Restmüll) behalten ihren Ton.
+   */
+  boostColor: function (hex) {
+    const rgb = this.hexToRgb(hex);
+    if (!rgb) {
+      return hex;
+    }
+
+    const hsl = this.rgbToHsl(rgb);
+    if (hsl.s < 0.15) {
+      hsl.l = 0.78;
+    } else {
+      hsl.s = Math.max(hsl.s, 0.85);
+      hsl.l = Math.min(0.55, Math.max(0.42, hsl.l * 0.55));
+    }
+
+    return this.hslToHex(hsl);
+  },
+
+  hexToRgb: function (hex) {
+    let value = String(hex).replace("#", "").trim();
+    if (value.length === 3) {
+      value = value
+        .split("")
+        .map((char) => char + char)
+        .join("");
+    }
+    if (!/^[0-9a-fA-F]{6}$/.test(value)) {
+      return null;
+    }
+    return {
+      r: parseInt(value.slice(0, 2), 16),
+      g: parseInt(value.slice(2, 4), 16),
+      b: parseInt(value.slice(4, 6), 16),
+    };
+  },
+
+  rgbToHsl: function ({ r, g, b }) {
+    const red = r / 255;
+    const green = g / 255;
+    const blue = b / 255;
+
+    const max = Math.max(red, green, blue);
+    const min = Math.min(red, green, blue);
+    const delta = max - min;
+
+    let h = 0;
+    if (delta) {
+      if (max === red) {
+        h = ((green - blue) / delta) % 6;
+      } else if (max === green) {
+        h = (blue - red) / delta + 2;
+      } else {
+        h = (red - green) / delta + 4;
+      }
+      h *= 60;
+      if (h < 0) {
+        h += 360;
+      }
+    }
+
+    const l = (max + min) / 2;
+    const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+
+    return { h, s, l };
+  },
+
+  hslToHex: function ({ h, s, l }) {
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = l - c / 2;
+
+    let rgb;
+    if (h < 60) {
+      rgb = [c, x, 0];
+    } else if (h < 120) {
+      rgb = [x, c, 0];
+    } else if (h < 180) {
+      rgb = [0, c, x];
+    } else if (h < 240) {
+      rgb = [0, x, c];
+    } else if (h < 300) {
+      rgb = [x, 0, c];
+    } else {
+      rgb = [c, 0, x];
+    }
+
+    return `#${rgb.map((value) => Math.round((value + m) * 255).toString(16).padStart(2, "0")).join("")}`;
   },
 
   // Generates the module content
@@ -257,9 +354,11 @@ Module.register("MMM-MyMuell", {
 
     const colorCell = document.createElement("td");
     colorCell.className = "trash-collection-color";
-    colorCell.style.padding = "5px";
-    colorCell.style.width = "6px";
+    colorCell.style.padding = "5px 0";
+    colorCell.style.width = this.config.colorBarWidth;
+    colorCell.style.minWidth = this.config.colorBarWidth;
     colorCell.style.backgroundColor = collection.color;
+    colorCell.style.borderRadius = "3px";
     row.appendChild(colorCell);
 
     const titleCell = document.createElement("td");
