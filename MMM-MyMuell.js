@@ -20,17 +20,41 @@ Module.register("MMM-MyMuell", {
     updateDataInterval: 0, // Sonntag
     updateInterval: 60 * 60 * 1000, // stündlich
     schedule: [],
+
+    // Markierte Tonnen per MQTT, z.B. aus Home Assistant (null = aus).
+    // markedTopic liefert {"Restmüll": "2026-10-31 14:02:11", ...}, Schlüssel = Titel der Tonne.
+    // Nach der Abholung geht {"title", "markiert"} an collectedTopic.
+    mqtt: null, // { server, username, password, markedTopic, collectedTopic }
+    markedColor: "red",
+    collectedAfterHour: 12, // am Abholtag erst ab dieser Stunde markiert = gilt für die nächste Abholung
   },
 
   // Module initialization
   start: function () {
     this.trashData = null;
     this.errorMessage = null;
+    this.markedBins = {};
+    this.reportedBins = {};
     this.updateTrashData();
+
+    if (this.config.mqtt) {
+      this.sendSocketNotification("MQTT_CONFIG", Object.assign({
+        markedTopic: "magicmirror/muell/markiert",
+        collectedTopic: "magicmirror/muell/abgeholt",
+      }, this.config.mqtt));
+    }
 
     setInterval(() => {
       this.update();
     }, this.config.updateInterval);
+  },
+
+  socketNotificationReceived: function (notification, payload) {
+    if (notification === "MARKED_BINS") {
+      this.markedBins = payload || {};
+      this.reportCollectedBins();
+      this.updateDom();
+    }
   },
 
   update: function () {
@@ -41,9 +65,48 @@ Module.register("MMM-MyMuell", {
       if (!this.trashData) {
         this.updateTrashData();
       } else {
+        this.reportCollectedBins();
         this.updateDom();
       }
     }
+  },
+
+  /*
+   * Meldet markierte Tonnen, deren Abholung seit der Markierung vorbei ist.
+   * Läuft bei jeder Aktualisierung, holt also auch nach, wenn der Spiegel
+   * am Tag nach der Abholung aus war.
+   */
+  reportCollectedBins: function () {
+    if (!this.trashData) {
+      return;
+    }
+    const today = this.formatDate(new Date());
+
+    Object.entries(this.markedBins).forEach(([title, markedAt]) => {
+      if (this.reportedBins[title] === markedAt) {
+        return;
+      }
+      const markedDay = String(markedAt).slice(0, 10);
+      const markedHour = parseInt(String(markedAt).slice(11, 13), 10) || 0;
+
+      const collected = this.trashData.some((collection) =>
+        collection.title === title &&
+        collection.day < today &&
+        (collection.day > markedDay ||
+          (collection.day === markedDay && markedHour < this.config.collectedAfterHour)));
+
+      if (collected) {
+        this.reportedBins[title] = markedAt;
+        this.sendSocketNotification("BIN_COLLECTED", { title, markiert: markedAt });
+      }
+    });
+  },
+
+  // Lokales Datum als "2026-10-31" (toISOString wäre UTC und kippt um Mitternacht zu spät)
+  formatDate: function (date) {
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${date.getFullYear()}-${month}-${day}`;
   },
 
   // Fetches the trash collection data from the configured provider
@@ -73,6 +136,7 @@ Module.register("MMM-MyMuell", {
         this.trashData = [];
       })
       .finally(() => {
+        this.reportCollectedBins();
         this.updateDom();
       });
   },
@@ -282,10 +346,10 @@ Module.register("MMM-MyMuell", {
       return wrapper;
     }
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = this.formatDate(new Date());
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowFormatted = tomorrow.toISOString().split("T")[0];
+    const tomorrowFormatted = this.formatDate(tomorrow);
 
     const todayCollections = this.trashData.filter((collection) => collection.day === today);
     const tomorrowCollections = this.trashData.filter((collection) => collection.day === tomorrowFormatted);
@@ -365,6 +429,11 @@ Module.register("MMM-MyMuell", {
     titleCell.className = "trash-collection-title";
     titleCell.style.padding = "5px";
     titleCell.innerHTML = collection.title;
+    if (this.markedBins[collection.title]) {
+      // voll markiert: muss auf jeden Fall raus
+      titleCell.style.color = this.config.markedColor;
+      titleCell.style.fontWeight = "bold";
+    }
     row.appendChild(titleCell);
 
     if (this.config.description) {

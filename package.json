@@ -1,0 +1,10 @@
+{
+  "name": "mmm-mymuell",
+  "version": "1.0.0",
+  "description": "MagicMirror2 Modul für Abfuhrtermine (MyMüll / AWIDO)",
+  "main": "MMM-MyMuell.js",
+  "license": "MIT",
+  "dependencies": {
+    "mqtt": "5.15.0"
+  }
+}

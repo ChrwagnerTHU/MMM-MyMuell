@@ -43,13 +43,18 @@ Das Modul kann seine Termine aus zwei verschiedenen Systemen beziehen. Welches f
 ```bash
 cd ~/MagicMirror/modules
 git clone https://github.com/ChrwagnerTHU/MMM-MyMuell
+cd MMM-MyMuell
+npm install
 ```
+
+`npm install` ist nur für die optionale MQTT-Markierung nötig (siehe unten).
 
 ## Update
 
 ```bash
 cd ~/MagicMirror/modules/MMM-MyMuell
 git pull
+npm install
 ```
 
 ## Konfiguration
@@ -122,6 +127,40 @@ Füge das Modul in `~/MagicMirror/config/config.js` hinzu.
 | `client` | `""` | Mandantenkürzel des Entsorgers (z. B. `"ebu"` für die EBU Ulm) |
 | `oid` | `""` | ID deiner Adresse (Straße oder Hausnummer) |
 | `includeSpecialEvents` | `false` | Zeigt zusätzlich Sondertermine wie ReparaturCafé, WarenTauschTage oder Putzete an |
+
+**Volle Tonnen markieren (MQTT, optional)**
+
+| Option | Standard | Beschreibung |
+|---|---|---|
+| `mqtt` | `null` | `{ server, username, password, markedTopic, collectedTopic }`; ohne diese Option verbindet sich das Modul nicht |
+| `markedColor` | `"red"` | Schriftfarbe einer markierten Tonne |
+| `collectedAfterHour` | `12` | Wird eine Tonne am Abholtag ab dieser Stunde markiert, gilt die Markierung erst für die nächste Abholung |
+
+## Volle Tonnen markieren
+
+Ist eine Tonne so voll, dass sie auf jeden Fall raus muss, kann man sie von außen (z. B. aus Home Assistant) markieren. Das Modul zeigt sie dann in `markedColor` an, sobald sie unter „Heute“ oder „Morgen“ steht.
+
+Das Modul abonniert `markedTopic` (Standard `magicmirror/muell/markiert`). Die Nachricht sollte `retain` sein und alle markierten Tonnen mit dem Zeitpunkt der Markierung enthalten. Der Schlüssel ist der Titel der Tonne, wie ihn die Datenquelle liefert:
+
+```json
+{"Restmüll": "2026-10-31 14:02:11", "Blaue Tonne": "2026-10-31 14:02:30"}
+```
+
+Ab dem Tag nach der nächsten Abholung meldet das Modul die Tonne auf `collectedTopic` (Standard `magicmirror/muell/abgeholt`) als erledigt, ein Mal pro Markierung:
+
+```json
+{"title": "Restmüll", "markiert": "2026-10-31 14:02:11"}
+```
+
+Der Absender nimmt die Markierung daraufhin zurück und schickt `markedTopic` neu. Weil `markiert` mitkommt, kann er eine inzwischen neu gesetzte Markierung erkennen und stehen lassen. War der Spiegel am Tag nach der Abholung aus, holt er die Meldung beim nächsten Start nach.
+
+```js
+mqtt: {
+  server: "mqtt://homeassistant.local",
+  username: "magicmirror",
+  password: "...",
+},
+```
 
 ## Konfigurationswerte ermitteln
 
